@@ -1,0 +1,133 @@
+:root {
+  --bg-light: linear-gradient(to right, #74ebd5, #9face6);
+  --bg-dark: linear-gradient(to right, #232526, #414345);
+  --text-light: #333;
+  --text-dark: #eee;
+  --primary: #007bff;
+  --button-hover: #0056b3;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--bg-light);
+  color: var(--text-light);
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.5s ease, color 0.5s ease;
+}
+
+body.dark-mode {
+  background: var(--bg-dark);
+  color: var(--text-dark);
+}
+
+.entry-container {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 50px 40px;
+  border-radius: 20px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+  transition: background 0.5s ease;
+}
+
+body.dark-mode .entry-container {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.logo i {
+  font-size: 70px;
+  color: var(--primary);
+  animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+h1 {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+.tagline {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.subtext {
+  font-size: 16px;
+  color: #888;
+  margin-bottom: 30px;
+}
+
+.btn {
+  display: inline-block;
+  background-color: var(--primary);
+  color: white;
+  text-decoration: none;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 18px;
+  transition: transform 0.3s, background-color 0.3s;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+}
+
+.btn:hover {
+  background-color: var(--button-hover);
+  transform: scale(1.05);
+}
+
+.theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--primary);
+  transition: color 0.3s ease;
+}
+
+.fade-in {
+  opacity: 0;
+  animation: fade 1.5s ease forwards;
+}
+
+.fade-in:nth-child(2) { animation-delay: 0.5s; }
+.fade-in:nth-child(3) { animation-delay: 1s; }
+.fade-in:nth-child(4) { animation-delay: 1.5s; }
+.fade-in:nth-child(5) { animation-delay: 2s; }
+
+@keyframes fade {
+  to {
+    opacity: 1;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .entry-container {
+    padding: 30px 20px;
+  }
+
+  .logo i {
+    font-size: 50px;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+
+  .btn {
+    font-size: 16px;
+    padding: 10px 20px;
+  }
+}
