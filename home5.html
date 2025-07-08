@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Expenses</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .profile-dropdown {
+            display: none;
+        }
+        .profile-container:hover .profile-dropdown {
+            display: block;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+        }
+        .calendar-day {
+            position: relative;
+            min-height: 120px;
+            transition: background-color 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+        .calendar-day .date-number {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 4px;
+            width: 100%;
+        }
+        .calendar-day-initial .date-number {
+            font-size: 1.2rem;
+            text-align: center;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .day-expense-display {
+            font-size: 0.8rem;
+            width: 100%;
+            overflow-y: auto;
+            max-height: 95px;
+        }
+        .day-expense-display .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            font-size: 0.8rem;
+            width: 100%;
+        }
+        .day-header {
+            font-weight: 500;
+            color: #4a5568;
+            text-align: center;
+            padding: 4px 0;
+        }
+        .category-color {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 4px;
+        }
+        .transaction-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .stats-container, .category-spending-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-title {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #111827;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: #4ade80;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+        .add-category-form {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+        .add-category-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .add-category-button {
+            padding: 8px 16px;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .today-highlight {
+            background-color: #e0f2fe !important;
+            border: 2px solid #38bdf8 !important;
+        }
+        .inline-expense-form {
+            width: 100%;
+            margin-top: 8px;
+        }
+        .inline-expense-item {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+        .inline-expense-item select, .inline-expense-item input {
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .inline-expense-item select {
+            flex: 1;
+        }
+        .inline-expense-item input {
+            width: 70px;
+        }
+        .inline-expense-buttons {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        .inline-expense-buttons button {
+            flex: 1;
+            padding: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            border: none;
+        }
+        .category-spend-card {
+            cursor: pointer;
+        }
+        #hierarchical-breakdown {
+            background-color: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+      /* Borrow/Lend Money Section Styles */
+.transaction-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.transaction-item:last-child {
+    border-bottom: none;
+}
+
+.status-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.paid {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.unpaid {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.received {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.unreceived {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #4ade80;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <header class="bg-white shadow-md">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center">
+                    <i class="fas fa-wallet text-3xl text-indigo-600"></i>
+                    <h1 class="text-2xl font-semibold text-gray-900 ml-3 hidden md:block">My Expenses</h1>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-4 text-sm text-right">
+                        <div>
+                            <span class="text-gray-500 block">Salary</span>
+                            <span id="header-salary" class="font-bold text-green-600">₹0.00</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 block">Spent</span>
+                            <span id="header-spent" class="font-bold text-red-600">₹0.00</span>
+                        </div>
+                         <div>
+                            <span class="text-gray-500 block">Remaining</span>
+                            <span id="header-remaining" class="font-bold text-gray-800">₹0.00</span>
+                        </div>
+                        <div class="border-l pl-4">
+                            <span class="text-gray-500 block">Total Savings</span>
+                            <span id="header-savings" class="font-bold text-blue-600">₹0.00</span>
+                        </div>
+                    </div>
+                    <button id="set-salary-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm"><i class="fas fa-edit mr-1"></i> Set Salary</button>
+                    <div class="relative profile-container">
+                        <button class="flex text-sm border-2 border-transparent rounded-full focus:outline-none focus:border-gray-300 transition">
+                            <img class="h-10 w-10 rounded-full object-cover" src="https://placehold.co/100x100/6366f1/ffffff?text=U" alt="User profile photo">
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-semibold text-gray-700">Common Expenses</h2>
+                 <button id="add-major-expense-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 transition text-sm">
+                    <i class="fas fa-plus mr-2"></i>Add Common Expense
+                </button>
+            </div>
+            <div id="major-expenses-list" class="bg-white p-4 rounded-lg shadow-sm space-y-3"></div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-lg font-semibold text-gray-700">Daily Expenses</h2>
+                    <select id="month-select" class="bg-white border border-gray-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></select>
+                    <select id="year-select" class="bg-white border border-gray-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></select>
+                </div>
+                <button id="manage-categories-btn" class="bg-gray-600 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-700 transition text-sm">
+                    <i class="fas fa-cogs mr-2"></i>Manage Categories
+                </button>
+            </div>
+            <div class="grid grid-cols-7 gap-2 mb-2">
+                <div class="day-header">Sun</div>
+                <div class="day-header">Mon</div>
+                <div class="day-header">Tue</div>
+                <div class="day-header">Wed</div>
+                <div class="day-header">Thu</div>
+                <div class="day-header">Fri</div>
+                <div class="day-header">Sat</div>
+            </div>
+            <div id="calendar-grid" class="calendar-grid"></div>
+        </div>
+
+        <div id="expense-stats" class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Expense Statistics</h2>
+            <div id="stats-container" class="stats-container"></div>
+        </div>
+        
+        <div id="category-spending-section" class="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Spending by Category</h2>
+            <div id="category-spending-container" class="category-spending-container"></div>
+            <div id="hierarchical-breakdown" class="hidden mt-4"></div>
+        </div>
+
+    </main>
+
+    <div id="major-expense-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full hidden z-30">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 text-center">Add Common Expense</h3>
+            <form id="major-expense-form" class="mt-4 space-y-3">
+                <input type="text" id="major-expense-name" placeholder="Expense Name (e.g., Rent)" class="w-full p-3 rounded-lg bg-gray-100" required>
+                <input type="number" id="major-expense-amount" placeholder="Amount" class="w-full p-3 rounded-lg bg-gray-100" required min="0">
+                <div class="flex gap-3 mt-4">
+                    <button id="save-major-expense-btn" type="submit" class="w-full py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600">Save</button>
+                    <button id="cancel-major-expense-btn" type="button" class="w-full py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="salary-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full hidden z-30">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 text-center">Set Your Monthly Salary</h3>
+            <form id="salary-form" class="mt-4 space-y-3">
+                <input type="number" id="salary-input" placeholder="Enter monthly salary" class="w-full p-3 rounded-lg bg-gray-100" required min="0">
+                <div class="flex gap-3 mt-4">
+                    <button id="save-salary-btn" type="submit" class="w-full py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600">Save</button>
+                    <button id="cancel-salary-btn" type="button" class="w-full py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="category-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 h-full w-full hidden z-30">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 text-center">Manage Expense Categories</h3>
+            <div id="category-list" class="mt-4 space-y-2 max-h-60 overflow-y-auto"></div>
+            <div class="add-category-form">
+                <input type="text" id="new-category-name" placeholder="New category name" class="add-category-input">
+                <input type="color" id="new-category-color" value="#3b82f6" class="p-1 h-10 w-10 block bg-white border border-gray-200 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none">
+                <button id="add-category-btn" class="add-category-button">Add</button>
+            </div>
+            <div class="mt-4 text-right">
+                <button id="close-category-modal-btn" type="button" class="py-2 px-4 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Close</button>
+            </div>
+        </div>
+    </div>
+  <!-- Borrow/Lend Money Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Borrowed Money Section -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex justify-between items-center mb-3">
+            <h2 class="text-lg font-semibold text-gray-700">Money Borrowed</h2>
+            <button id="add-borrowed-btn" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm">
+                <i class="fas fa-plus mr-1"></i>Add
+            </button>
+        </div>
+        <div id="borrowed-form" class="mb-3 hidden">
+            <div class="flex gap-2 mb-2">
+                <input type="text" id="borrowed-name" placeholder="Person's Name" class="flex-1 p-2 border rounded">
+                <input type="number" id="borrowed-amount" placeholder="Amount" class="w-24 p-2 border rounded">
+            </div>
+            <div class="flex gap-2">
+                <button id="save-borrowed-btn" class="bg-green-600 text-white px-3 py-1 rounded text-sm">Save</button>
+                <button id="cancel-borrowed-btn" class="bg-gray-200 text-gray-800 px-3 py-1 rounded text-sm">Cancel</button>
+            </div>
+        </div>
+        <div id="borrowed-list" class="transaction-list"></div>
+    </div>
+    
+    <!-- Lent Money Section -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <div class="flex justify-between items-center mb-3">
+            <h2 class="text-lg font-semibold text-gray-700">Money Lent</h2>
+            <button id="add-lent-btn" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm">
+                <i class="fas fa-plus mr-1"></i>Add
+            </button>
+        </div>
+        <div id="lent-form" class="mb-3 hidden">
+            <div class="flex gap-2 mb-2">
+                <input type="text" id="lent-name" placeholder="Person's Name" class="flex-1 p-2 border rounded">
+                <input type="number" id="lent-amount" placeholder="Amount" class="w-24 p-2 border rounded">
+            </div>
+            <div class="flex gap-2">
+                <button id="save-lent-btn" class="bg-green-600 text-white px-3 py-1 rounded text-sm">Save</button>
+                <button id="cancel-lent-btn" class="bg-gray-200 text-gray-800 px-3 py-1 rounded text-sm">Cancel</button>
+            </div>
+        </div>
+        <div id="lent-list" class="transaction-list"></div>
+    </div>
+</div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Element Selectors
+        const calendarGridEl = document.getElementById('calendar-grid');
+        const majorExpensesListEl = document.getElementById('major-expenses-list');
+        const monthSelect = document.getElementById('month-select');
+        const yearSelect = document.getElementById('year-select');
+        const headerSalaryEl = document.getElementById('header-salary');
+        const headerSpentEl = document.getElementById('header-spent');
+        const headerRemainingEl = document.getElementById('header-remaining');
+        const headerSavingsEl = document.getElementById('header-savings');
+        const majorExpenseModal = document.getElementById('major-expense-modal');
+        const salaryModal = document.getElementById('salary-modal');
+        const categoryModal = document.getElementById('category-modal');
+        const manageCategoriesBtn = document.getElementById('manage-categories-btn');
+        const statsContainer = document.getElementById('stats-container');
+        const categorySpendingContainer = document.getElementById('category-spending-container');
+        const hierarchicalBreakdownEl = document.getElementById('hierarchical-breakdown');
+
+        // State Initialization
+        let currentDate = new Date();
+        let salary = JSON.parse(localStorage.getItem('salary')) || 0;
+        let dailyExpenses = JSON.parse(localStorage.getItem('dailyExpenses')) || {};
+        let majorExpenses = JSON.parse(localStorage.getItem('majorExpenses')) || [];
+        let expenseCategories = JSON.parse(localStorage.getItem('expenseCategories')) || [
+            { name: 'Petrol', color: '#ef4444' },
+            { name: 'Recharge', color: '#f97316' },
+            { name: 'Groceries', color: '#10b981' },
+            { name: 'Stationery', color: '#06b6d4' },
+            { name: 'Kirana', color: '#d946ef' },
+            { name: 'Tea & Snacks', color: '#8b5cf6' },
+            { name: 'Others', color: '#3b82f6' }
+        ];
+        let savings = JSON.parse(localStorage.getItem('savings')) || 0;
+        let paidMajorExpenses = JSON.parse(localStorage.getItem('paidMajorExpenses')) || {};
+        
+        // Utility Functions
+        const formatCurrency = (amount) => `₹${Number(amount).toFixed(2)}`;
+        const saveState = () => {
+            localStorage.setItem('salary', JSON.stringify(salary));
+            localStorage.setItem('dailyExpenses', JSON.stringify(dailyExpenses));
+            localStorage.setItem('majorExpenses', JSON.stringify(majorExpenses));
+            localStorage.setItem('expenseCategories', JSON.stringify(expenseCategories));
+            localStorage.setItem('savings', JSON.stringify(savings));
+            localStorage.setItem('paidMajorExpenses', JSON.stringify(paidMajorExpenses));
+        };
+        const showModal = (modal) => modal.style.display = 'block';
+        const hideModal = (modal) => modal.style.display = 'none';
+        const getCurrentYyyyMmDd = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const isToday = (date) => {
+            const today = new Date();
+            return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+        };
+
+        const populateDropdowns = () => {
+            monthSelect.innerHTML = '';
+            yearSelect.innerHTML = '';
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            months.forEach((month, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = month;
+                if (index === currentDate.getMonth()) option.selected = true;
+                monthSelect.appendChild(option);
+            });
+            const currentYear = new Date().getFullYear();
+            for (let year = currentYear + 5; year >= currentYear - 5; year--) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                if (year === currentDate.getFullYear()) option.selected = true;
+                yearSelect.appendChild(option);
+            }
+        };
+        
+        const renderCalendar = () => {
+            calendarGridEl.innerHTML = '';
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            const firstDayOfWeek = firstDayOfMonth.getDay();
+
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                calendarGridEl.innerHTML += `<div class="bg-gray-50 rounded-lg"></div>`;
+            }
+
+            for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
+                const date = new Date(year, month, day);
+                const dateStr = getCurrentYyyyMmDd(date);
+                const dayEl = document.createElement('div');
+                dayEl.className = `calendar-day bg-white rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer`;
+                if (isToday(date)) dayEl.classList.add('today-highlight');
+                dayEl.dataset.date = dateStr;
+                renderDayCell(dayEl, dateStr);
+                calendarGridEl.appendChild(dayEl);
+            }
+            updateAll();
+        };
+
+        const renderDayCell = (dayEl, dateStr) => {
+            dayEl.innerHTML = ''; // Clear previous content
+            const dayExpenses = dailyExpenses[dateStr] || [];
+            
+            const dateNumberEl = document.createElement('div');
+            dateNumberEl.className = 'date-number';
+            dateNumberEl.textContent = new Date(dateStr + 'T00:00:00').getDate();
+            dayEl.appendChild(dateNumberEl);
+            
+            if (dayExpenses.length === 0) {
+                 dayEl.classList.add('calendar-day-initial');
+            } else {
+                dayEl.classList.remove('calendar-day-initial');
+                const expensesContainer = document.createElement('div');
+                expensesContainer.className = 'day-expense-display space-y-1';
+                
+                dayExpenses.forEach(exp => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'item';
+                    itemEl.innerHTML = `
+                        <span class="truncate" title="${exp.category}">${exp.category}</span>
+                        <span class="font-medium text-red-500">${formatCurrency(exp.amount)}</span>
+                    `;
+                    expensesContainer.appendChild(itemEl);
+                });
+                dayEl.appendChild(expensesContainer);
+            }
+        };
+
+        const openInCellEditor = (dayEl, dateStr) => {
+            dayEl.classList.remove('calendar-day-initial');
+            dayEl.classList.remove('cursor-pointer');
+            dayEl.innerHTML = ''; // Clear the cell
+
+            const dateNumberEl = document.createElement('div');
+            dateNumberEl.className = 'date-number';
+            dateNumberEl.textContent = new Date(dateStr + 'T00:00:00').getDate();
+            dayEl.appendChild(dateNumberEl);
+
+            const form = document.createElement('div');
+            form.className = 'inline-expense-form';
+            const itemsContainer = document.createElement('div');
+            form.appendChild(itemsContainer);
+
+            const addExpenseLine = () => {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'inline-expense-item';
+                const categorySelect = document.createElement('select');
+                expenseCategories.forEach(cat => {
+                    categorySelect.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
+                });
+                const amountInput = document.createElement('input');
+                amountInput.type = 'number';
+                amountInput.placeholder = 'Amt';
+                amountInput.min = '0';
+                
+                itemEl.append(categorySelect, amountInput);
+                itemsContainer.appendChild(itemEl);
+            };
+
+            // Add existing or one new line
+            const existingExpenses = dailyExpenses[dateStr] || [];
+            if (existingExpenses.length > 0) {
+                existingExpenses.forEach(exp => addExpenseLineWithValue(exp.category, exp.amount));
+            } else {
+                 addExpenseLine();
+            }
+            
+            function addExpenseLineWithValue(category, amount) {
+                const itemEl = document.createElement('div');
+                itemEl.className = 'inline-expense-item';
+                const categorySelect = document.createElement('select');
+                expenseCategories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.name;
+                    option.textContent = cat.name;
+                    if (cat.name === category) option.selected = true;
+                    categorySelect.appendChild(option);
+                });
+                const amountInput = document.createElement('input');
+                amountInput.type = 'number';
+                amountInput.placeholder = 'Amt';
+                amountInput.min = '0';
+                amountInput.value = amount;
+
+                itemEl.append(categorySelect, amountInput);
+                itemsContainer.appendChild(itemEl);
+            }
+
+            const buttons = document.createElement('div');
+            buttons.className = 'inline-expense-buttons';
+            buttons.innerHTML = `
+                <button class="save-btn bg-green-500 text-white">Save</button>
+                <button class="add-line-btn bg-blue-500 text-white"><i class="fas fa-plus"></i></button>
+                <button class="cancel-btn bg-red-500 text-white">Cancel</button>
+            `;
+            form.appendChild(buttons);
+            dayEl.appendChild(form);
+
+            buttons.querySelector('.add-line-btn').onclick = addExpenseLine;
+            buttons.querySelector('.cancel-btn').onclick = () => {
+                dayEl.classList.add('cursor-pointer');
+                renderDayCell(dayEl, dateStr);
+            };
+            buttons.querySelector('.save-btn').onclick = () => {
+                const items = [];
+                itemsContainer.querySelectorAll('.inline-expense-item').forEach(itemEl => {
+                    const category = itemEl.querySelector('select').value;
+                    const amount = parseFloat(itemEl.querySelector('input').value);
+                    if (category && amount > 0) {
+                        items.push({ category, amount });
+                    }
+                });
+                dailyExpenses[dateStr] = items;
+                dayEl.classList.add('cursor-pointer');
+                renderDayCell(dayEl, dateStr);
+                updateAll();
+            };
+        };
+
+        const updateHeaderAndStats = () => {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            let totalSpent = 0;
+            let transactionCount = 0;
+            const categoryTotals = {};
+            expenseCategories.forEach(c => categoryTotals[c.name] = 0);
+
+            // Calculate daily expenses
+            for (const dateStr in dailyExpenses) {
+                if (dateStr.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)) {
+                    const dayExps = dailyExpenses[dateStr];
+                    transactionCount += dayExps.length;
+                    dayExps.forEach(exp => {
+                        totalSpent += exp.amount;
+                        if(categoryTotals[exp.category] !== undefined) {
+                            categoryTotals[exp.category] += exp.amount;
+                        } else { // Handle items that might have been deleted from main categories
+                             if(!categoryTotals['Others']) categoryTotals['Others'] = 0;
+                             categoryTotals['Others'] += exp.amount;
+                        }
+                    });
+                }
+            }
+            
+            // Add paid common expenses
+            const paidThisMonthKey = `${year}-${month}`;
+            if(paidMajorExpenses[paidThisMonthKey]) {
+                majorExpenses.forEach(majorExp => {
+                    if (paidMajorExpenses[paidThisMonthKey][majorExp.name]) {
+                        totalSpent += majorExp.amount;
+                    }
+                });
+            }
+
+            headerSalaryEl.textContent = formatCurrency(salary);
+            headerSpentEl.textContent = formatCurrency(totalSpent);
+            headerRemainingEl.textContent = formatCurrency(salary - totalSpent);
+            headerSavingsEl.textContent = formatCurrency(savings);
+
+            // Update stats cards
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-title">Total Spent This Month</div>
+                    <div class="stat-value text-red-500">${formatCurrency(totalSpent)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Transactions</div>
+                    <div class="stat-value">${transactionCount}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Avg. Daily Spend</div>
+                    <div class="stat-value">${formatCurrency(totalSpent / new Date(year, month + 1, 0).getDate())}</div>
+                </div>
+            `;
+            
+            // Update Spending by Category
+            categorySpendingContainer.innerHTML = '';
+            hierarchicalBreakdownEl.classList.add('hidden'); // Hide breakdown on update
+            Object.entries(categoryTotals).forEach(([category, total]) => {
+                if (total > 0) {
+                    const catCard = document.createElement('div');
+                    catCard.className = 'stat-card category-spend-card';
+                    catCard.dataset.category = category;
+                    const catColor = expenseCategories.find(c => c.name === category)?.color || '#808080';
+                    catCard.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <span class="stat-title"><span class="category-color" style="background-color:${catColor}"></span>${category}</span>
+                            <span class="font-semibold text-lg">${formatCurrency(total)}</span>
+                        </div>
+                    `;
+                    categorySpendingContainer.appendChild(catCard);
+                }
+            });
+        };
+
+        const showHierarchicalBreakdown = (category) => {
+            hierarchicalBreakdownEl.classList.remove('hidden');
+            hierarchicalBreakdownEl.innerHTML = `<h3 class="text-md font-semibold mb-2 border-b pb-2">Breakdown for: ${category}</h3>`;
+            const list = document.createElement('ul');
+            list.className = 'list-disc pl-5 space-y-1 text-sm';
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            let found = false;
+            
+            Object.entries(dailyExpenses)
+                .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
+                .forEach(([dateStr, expenses]) => {
+                if (dateStr.startsWith(`${year}-${String(month + 1).padStart(2, '0')}`)) {
+                    expenses.forEach(exp => {
+                        if (exp.category === category) {
+                            found = true;
+                            const dateObj = new Date(dateStr + 'T00:00:00');
+                            const formattedDate = `${dateObj.getDate()}${['th','st','nd','rd'][((dateObj.getDate()%100)-20)%10]||['th','st','nd','rd'][dateObj.getDate()%100]||'th'}`;
+                            const listItem = document.createElement('li');
+                            listItem.innerHTML = `On <strong>${formattedDate}</strong>: <span class="font-semibold text-red-500">${formatCurrency(exp.amount)}</span>`;
+                            list.appendChild(listItem);
+                        }
+                    });
+                }
+            });
+            
+            if(!found) {
+                list.innerHTML = '<li>No transactions found for this category this month.</li>';
+            }
+
+            hierarchicalBreakdownEl.appendChild(list);
+        };
+        
+        const updateAll = () => {
+            saveState();
+            updateHeaderAndStats();
+            // `renderMajorExpenses` is called separately on its own events
+        };
+        
+        // Initial call
+        populateDropdowns();
+        renderCalendar();
+        
+        // Event Listeners
+        monthSelect.addEventListener('change', (e) => {
+            currentDate.setMonth(e.target.value);
+            renderCalendar();
+        });
+        yearSelect.addEventListener('change', (e) => {
+            currentDate.setFullYear(e.target.value);
+            renderCalendar();
+        });
+        
+        calendarGridEl.addEventListener('click', (e) => {
+            const dayEl = e.target.closest('.calendar-day');
+            if (dayEl && !dayEl.querySelector('.inline-expense-form')) {
+                const dateStr = dayEl.dataset.date;
+                openInCellEditor(dayEl, dateStr);
+            }
+        });
+
+        categorySpendingContainer.addEventListener('click', (e) => {
+            const card = e.target.closest('.category-spend-card');
+            if (card) {
+                const category = card.dataset.category;
+                showHierarchicalBreakdown(category);
+            }
+        });
+
+        // --- All modal and other button listeners from original code ---
+        // (This includes salary setting, common expenses, and category management)
+        // Set Salary
+        const salaryModalBtn = document.getElementById('set-salary-btn');
+        const salaryForm = document.getElementById('salary-form');
+        salaryModalBtn.onclick = () => showModal(salaryModal);
+        salaryForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            salary = parseFloat(document.getElementById('salary-input').value) || 0;
+            hideModal(salaryModal);
+            updateAll();
+        });
+        document.getElementById('cancel-salary-btn').onclick = () => hideModal(salaryModal);
+
+        // Manage Categories
+        const categoryListEl = document.getElementById('category-list');
+        manageCategoriesBtn.onclick = () => {
+            renderCategories();
+            showModal(categoryModal);
+        };
+        document.getElementById('close-category-modal-btn').onclick = () => {
+            hideModal(categoryModal);
+            renderCalendar(); // Re-render in case categories changed
+        };
+        document.getElementById('add-category-btn').onclick = () => {
+            const nameInput = document.getElementById('new-category-name');
+            const colorInput = document.getElementById('new-category-color');
+            const name = nameInput.value.trim();
+            if (name && !expenseCategories.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                expenseCategories.push({ name, color: colorInput.value });
+                nameInput.value = '';
+                renderCategories();
+                saveState();
+            }
+        };
+
+        const renderCategories = () => {
+            categoryListEl.innerHTML = '';
+            expenseCategories.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between p-2 bg-gray-100 rounded';
+                div.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="category-color" style="background-color:${cat.color};"></span>
+                        <span>${cat.name}</span>
+                    </div>
+                    <button data-name="${cat.name}" class="text-red-500 hover:text-red-700 remove-cat-btn"><i class="fas fa-trash"></i></button>
+                `;
+                categoryListEl.appendChild(div);
+            });
+        };
+        categoryListEl.addEventListener('click', (e) => {
+            if (e.target.closest('.remove-cat-btn')) {
+                const catName = e.target.closest('.remove-cat-btn').dataset.name;
+                expenseCategories = expenseCategories.filter(c => c.name !== catName);
+                renderCategories();
+                saveState();
+            }
+        });
+
+        // Common Expenses
+        const addMajorExpenseBtn = document.getElementById('add-major-expense-btn');
+        const majorExpenseForm = document.getElementById('major-expense-form');
+        addMajorExpenseBtn.onclick = () => showModal(majorExpenseModal);
+        document.getElementById('cancel-major-expense-btn').onclick = () => hideModal(majorExpenseModal);
+        majorExpenseForm.addEventListener('submit', e => {
+            e.preventDefault();
+            const name = document.getElementById('major-expense-name').value;
+            const amount = parseFloat(document.getElementById('major-expense-amount').value);
+            if (name && amount > 0 && !majorExpenses.some(m => m.name === name)) {
+                majorExpenses.push({ name, amount });
+                renderMajorExpenses();
+                updateAll();
+                hideModal(majorExpenseModal);
+                majorExpenseForm.reset();
+            }
+        });
+
+        const renderMajorExpenses = () => {
+            majorExpensesListEl.innerHTML = '';
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const paidThisMonthKey = `${year}-${month}`;
+            paidMajorExpenses[paidThisMonthKey] = paidMajorExpenses[paidThisMonthKey] || {};
+
+            if (majorExpenses.length === 0) {
+                majorExpensesListEl.innerHTML = '<p class="text-gray-500">No common expenses added yet.</p>';
+                return;
+            }
+
+            majorExpenses.forEach(exp => {
+                const isPaid = !!paidMajorExpenses[paidThisMonthKey][exp.name];
+                const expEl = document.createElement('div');
+                expEl.className = 'flex justify-between items-center p-3 rounded-lg';
+                expEl.innerHTML = `
+                    <div>
+                        <p class="font-semibold text-gray-800">${exp.name}</p>
+                        <p class="text-sm text-gray-600">${formatCurrency(exp.amount)}</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm font-medium ${isPaid ? 'text-green-600' : 'text-red-600'}">${isPaid ? 'Paid' : 'Unpaid'}</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" class="major-expense-toggle" data-name="${exp.name}" ${isPaid ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <button class="text-gray-400 hover:text-red-500 remove-major-btn" data-name="${exp.name}"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                majorExpensesListEl.appendChild(expEl);
+            });
+        };
+        majorExpensesListEl.addEventListener('change', e => {
+            if(e.target.classList.contains('major-expense-toggle')) {
+                const name = e.target.dataset.name;
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                const paidThisMonthKey = `${year}-${month}`;
+                paidMajorExpenses[paidThisMonthKey][name] = e.target.checked;
+                updateAll();
+                renderMajorExpenses(); // to update text
+            }
+        });
+        majorExpensesListEl.addEventListener('click', e => {
+            if(e.target.closest('.remove-major-btn')) {
+                const name = e.target.closest('.remove-major-btn').dataset.name;
+                majorExpenses = majorExpenses.filter(m => m.name !== name);
+                renderMajorExpenses();
+                updateAll();
+            }
+        });
+
+        renderMajorExpenses();
+
+    });
+      
+      // Borrow/Lend Money Section Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Element Selectors
+    const borrowedListEl = document.getElementById('borrowed-list');
+    const lentListEl = document.getElementById('lent-list');
+    const addBorrowedBtn = document.getElementById('add-borrowed-btn');
+    const borrowedForm = document.getElementById('borrowed-form');
+    const saveBorrowedBtn = document.getElementById('save-borrowed-btn');
+    const cancelBorrowedBtn = document.getElementById('cancel-borrowed-btn');
+    const addLentBtn = document.getElementById('add-lent-btn');
+    const lentForm = document.getElementById('lent-form');
+    const saveLentBtn = document.getElementById('save-lent-btn');
+    const cancelLentBtn = document.getElementById('cancel-lent-btn');
+
+    // State Initialization
+    let borrowedMoney = JSON.parse(localStorage.getItem('borrowedMoney')) || [];
+    let lentMoney = JSON.parse(localStorage.getItem('lentMoney')) || [];
+
+    // Utility Functions
+    const formatCurrency = (amount) => `₹${Number(amount).toFixed(2)}`;
+    const saveState = () => {
+        localStorage.setItem('borrowedMoney', JSON.stringify(borrowedMoney));
+        localStorage.setItem('lentMoney', JSON.stringify(lentMoney));
+    };
+
+    // Render Functions
+    const renderBorrowedList = () => {
+        borrowedListEl.innerHTML = '';
+        if (borrowedMoney.length === 0) {
+            borrowedListEl.innerHTML = '<p class="text-gray-400 text-center">No borrowed money</p>';
+            return;
+        }
+        
+        borrowedMoney.forEach((item, index) => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'transaction-item';
+            itemEl.innerHTML = `
+                <div>
+                    <span class="font-medium">${item.name}</span>
+                    <span class="text-sm text-gray-500 ml-2">${formatCurrency(item.amount)}</span>
+                </div>
+                <div class="status-toggle">
+                    <span class="status-badge ${item.paid ? 'paid' : 'unpaid'}">
+                        ${item.paid ? 'Paid' : 'Unpaid'}
+                    </span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${item.paid ? 'checked' : ''} data-index="${index}" data-type="toggle-paid">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <button class="text-gray-400 hover:text-red-600" data-index="${index}" data-type="delete-borrowed">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            `;
+            borrowedListEl.appendChild(itemEl);
+        });
+    };
+
+    const renderLentList = () => {
+        lentListEl.innerHTML = '';
+        if (lentMoney.length === 0) {
+            lentListEl.innerHTML = '<p class="text-gray-400 text-center">No lent money</p>';
+            return;
+        }
+        
+        lentMoney.forEach((item, index) => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'transaction-item';
+            itemEl.innerHTML = `
+                <div>
+                    <span class="font-medium">${item.name}</span>
+                    <span class="text-sm text-gray-500 ml-2">${formatCurrency(item.amount)}</span>
+                </div>
+                <div class="status-toggle">
+                    <span class="status-badge ${item.received ? 'received' : 'unreceived'}">
+                        ${item.received ? 'Received' : 'Unreceived'}
+                    </span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${item.received ? 'checked' : ''} data-index="${index}" data-type="toggle-received">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <button class="text-gray-400 hover:text-red-600" data-index="${index}" data-type="delete-lent">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            `;
+            lentListEl.appendChild(itemEl);
+        });
+    };
+
+    // Event Listeners
+    // Add borrowed money
+    addBorrowedBtn.addEventListener('click', () => {
+        borrowedForm.classList.toggle('hidden');
+    });
+
+    cancelBorrowedBtn.addEventListener('click', () => {
+        borrowedForm.classList.add('hidden');
+        document.getElementById('borrowed-name').value = '';
+        document.getElementById('borrowed-amount').value = '';
+    });
+
+    saveBorrowedBtn.addEventListener('click', () => {
+        const name = document.getElementById('borrowed-name').value.trim();
+        const amount = parseFloat(document.getElementById('borrowed-amount').value);
+        
+        if (name && !isNaN(amount) && amount > 0) {
+            borrowedMoney.push({
+                name,
+                amount,
+                date: new Date().toISOString(),
+                paid: false
+            });
+            saveState();
+            borrowedForm.classList.add('hidden');
+            document.getElementById('borrowed-name').value = '';
+            document.getElementById('borrowed-amount').value = '';
+            renderBorrowedList();
+        } else {
+            alert('Please enter valid name and amount.');
+        }
+    });
+
+    // Add lent money
+    addLentBtn.addEventListener('click', () => {
+        lentForm.classList.toggle('hidden');
+    });
+
+    cancelLentBtn.addEventListener('click', () => {
+        lentForm.classList.add('hidden');
+        document.getElementById('lent-name').value = '';
+        document.getElementById('lent-amount').value = '';
+    });
+
+    saveLentBtn.addEventListener('click', () => {
+        const name = document.getElementById('lent-name').value.trim();
+        const amount = parseFloat(document.getElementById('lent-amount').value);
+        
+        if (name && !isNaN(amount) && amount > 0) {
+            lentMoney.push({
+                name,
+                amount,
+                date: new Date().toISOString(),
+                received: false
+            });
+            saveState();
+            lentForm.classList.add('hidden');
+            document.getElementById('lent-name').value = '';
+            document.getElementById('lent-amount').value = '';
+            renderLentList();
+        } else {
+            alert('Please enter valid name and amount.');
+        }
+    });
+
+    // Handle borrowed/lent money toggles and deletions
+    document.addEventListener('click', function(e) {
+        const target = e.target;
+        const type = target.dataset.type;
+        const index = target.dataset.index;
+        
+        // Handle borrowed/lent money toggles
+        if (type === 'toggle-paid') {
+            borrowedMoney[index].paid = target.checked;
+            saveState();
+            renderBorrowedList();
+        }
+        
+        if (type === 'toggle-received') {
+            lentMoney[index].received = target.checked;
+            saveState();
+            renderLentList();
+        }
+        
+        // Handle borrowed/lent money deletion
+        if (type === 'delete-borrowed') {
+            if (confirm('Are you sure you want to delete this borrowed money record?')) {
+                borrowedMoney.splice(index, 1);
+                saveState();
+                renderBorrowedList();
+            }
+        }
+        
+        if (type === 'delete-lent') {
+            if (confirm('Are you sure you want to delete this lent money record?')) {
+                lentMoney.splice(index, 1);
+                saveState();
+                renderLentList();
+            }
+        }
+    });
+
+    // Initialization
+    renderBorrowedList();
+    renderLentList();
+});
+    </script>
+</body>
+</html>
